@@ -18,9 +18,16 @@ data "aws_vpc" "default" {
   default = true
 }
 
+resource "aws_security_group" "blog" {
+  name        = "blog"
+  description = "Allow http and https in. Allow everything out"
+
+  vpc_id = data.aws_vpc.default.id
+}
+
 resource "aws_instance" "blog" {
   ami           = data.aws_ami.app_ami.id
-  instance_type = var.instance_type
+  instance_type = "t2.micro"  # Set your instance type here
 
   vpc_security_group_ids = [aws_security_group.blog.id]
 
@@ -29,14 +36,7 @@ resource "aws_instance" "blog" {
   }
 }
 
-resource "aws_security_group" "blog" {
-  name        = "blog"
-  description = "Allow http and https in. Allow everything out"
-
-  vpc_id = data.aws_vpc.default.id
-}
-
-resource "aws_security_rule" "blog_http_in" {
+resource "aws_security_group_rule" "blog_http_in" {
   type        = "ingress"
   from_port   = 80
   to_port     = 80
@@ -46,7 +46,7 @@ resource "aws_security_rule" "blog_http_in" {
   security_group_id = aws_security_group.blog.id
 }
 
-resource "aws_security_rule" "blog_https_in" {
+resource "aws_security_group_rule" "blog_https_in" {
   security_group_id = aws_security_group.blog.id
 
   type        = "ingress"
@@ -54,13 +54,9 @@ resource "aws_security_rule" "blog_https_in" {
   to_port     = 443
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-  
-  security_group_id = aws_security_group.blog.id
 }
 
-resource "aws_security_rule" "blog_everything_out" {
-  // ... other security group settings ...
-  
+resource "aws_security_group_rule" "blog_everything_out" {
   type        = "egress"
   from_port   = 0
   to_port     = 0
